@@ -1,0 +1,56 @@
+---
+- name: Configure NAS server
+  hosts: nas_server
+  become: true
+
+  handlers:
+    - name: Include handlers
+      ansible.builtin.include_tasks: tasks/handlers.yaml
+
+  tasks:
+    - name: Add contrib component to main suite
+      ansible.builtin.replace:
+        path: /etc/apt/sources.list.d/debian.sources
+        regexp: '^(Components: main)$'
+        replace: 'Components: main contrib'
+      notify: Update apt cache
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install ZFS
+      ansible.builtin.apt:
+        name:
+          - linux-headers-amd64
+          - zfsutils-linux
+          - zfs-dkms
+          - zfs-zed
+        state: present
+
+    - name: Add ZFS module
+      community.general.modprobe:
+        name: zfs
+        state: present
+
+    - name: Create ZFS pools
+      ansible.builtin.command:
+        cmd: zpool create {{ item.name }} {{ item.members }} -f
+        creates: /{{ item.name }}
+      loop:
+        - name: tank
+          members: >-
+            mirror
+            /dev/disk/by-id/ata-WDC_WD60EFPX-68C5ZN0_WD-WX12D350VTV1
+            /dev/disk/by-id/ata-WDC_WD60EFPX-68C5ZN0_WD-WX12D35R1SDV
+            cache
+            /dev/disk/by-id/ata-ADATA_SU800_2I2920015562
+
+    - name: Create filesystems
+      community.general.zfs:
+        name: tank/{{ item }}
+        state: present
+      loop:
+        - backup
+        - media
+        - nas
