@@ -4,8 +4,14 @@
   become: true
 
   handlers:
-    - name: Include handlers
-      ansible.builtin.include_tasks: tasks/handlers.yaml
+    - name: Update apt repos
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Restart SMB
+      ansible.builtin.service:
+        name: smbd
+        state: restarted
 
   tasks:
     - name: Add contrib component to main suite
@@ -13,11 +19,23 @@
         path: /etc/apt/sources.list.d/debian.sources
         regexp: '^(Components: main)$'
         replace: 'Components: main contrib'
-      notify: Update apt cache
+      notify: Update apt repos
 
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
+
+    - name: Install samba
+      ansible.builtin.apt:
+        name:
+          - samba
+        state: present
+
+    - name: Make sure samba is started and enabled
+      ansible.builtin.service:
+        name: smbd
+        state: started
+        enabled: true
 
     - name: Install ZFS
       ansible.builtin.apt:
@@ -54,3 +72,27 @@
         - backup
         - media
         - nas
+
+    - name: Configure samba
+      ansible.builtin.template:
+        src: templates/smb.conf.j2
+        dest: /etc/samba/smb.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart SMB
+
+    - name: Configure privilages for samba shares
+      ansible.builtin.file:
+        path: "/tank/{{ item }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "root"
+        mode: "0755"
+      loop:
+        - backup
+        - media
+        - nas
+
+      # For now, samba user password is configured manually
+      # smbpasswd -a samba_user
