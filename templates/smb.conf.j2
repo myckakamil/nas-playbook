@@ -27,20 +27,11 @@
 
 #======================= Share Definitions =======================
 
-[backup]
-    path = /tank/backup
-    comment = Movies, TV series etc.
-    sharename = media
+{% for zvol in zfs_zvols %}
+[{{ zvol.share_name }}]
+    path = /{{ zvol.name }}
+    sharename = {{ zvol.share_name }}
+    comment = {{ zvol.comment }}
     writable = yes
 
-[media]
-    path = /tank/media
-    comment = Movies, TV series etc.
-    sharename = media
-    writable = yes
-
-[nas]
-    path = /tank/nas
-    comment = Movies, TV series etc.
-    sharename = media
-    writable = yes
+{% endfor %}

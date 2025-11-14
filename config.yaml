@@ -1,0 +1,20 @@
+---
+zfs_pools:
+  - name: tank
+    members:
+      - mirror
+      - /dev/disk/by-id/ata-WDC_WD60EFPX-68C5ZN0_WD-WX12D350VTV1
+      - /dev/disk/by-id/ata-WDC_WD60EFPX-68C5ZN0_WD-WX12D35R1SDV
+      - cache
+      - /dev/disk/by-id/ata-ADATA_SU800_2I2920015562
+zfs_zvols:
+  - name: tank/backup
+    share_name: backup
+    comment: Backups from VM
+  - name: tank/media
+    share_name: media
+    comment: Movies and TV series
+  - name: tank/nas
+    share_name: nas
+    comment: Backups from workstations
+smb_user: "{{ ansible_user }}"

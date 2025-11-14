@@ -14,6 +14,9 @@
         state: restarted
 
   tasks:
+    - name: Load vars
+      ansible.builtin.include_vars: config.yaml
+
     - name: Add contrib component to main suite
       ansible.builtin.replace:
         path: /etc/apt/sources.list.d/debian.sources
@@ -55,23 +58,13 @@
       ansible.builtin.command:
         cmd: zpool create {{ item.name }} {{ item.members }} -f
         creates: /{{ item.name }}
-      loop:
-        - name: tank
-          members: >-
-            mirror
-            /dev/disk/by-id/ata-WDC_WD60EFPX-68C5ZN0_WD-WX12D350VTV1
-            /dev/disk/by-id/ata-WDC_WD60EFPX-68C5ZN0_WD-WX12D35R1SDV
-            cache
-            /dev/disk/by-id/ata-ADATA_SU800_2I2920015562
+      loop: "{{ zfs_pools }}"
 
     - name: Create filesystems
       community.general.zfs:
-        name: tank/{{ item }}
+        name: "{{ item.name }}"
         state: present
-      loop:
-        - backup
-        - media
-        - nas
+      loop: "{{ zfs_zvols }}"
 
     - name: Configure samba
       ansible.builtin.template:
@@ -84,15 +77,12 @@
 
     - name: Configure privilages for samba shares
       ansible.builtin.file:
-        path: "/tank/{{ item }}"
+        path: "/{{ item.name }}"
         state: directory
-        owner: "{{ ansible_user }}"
+        owner: "{{ smb_user }}"
         group: "root"
         mode: "0755"
-      loop:
-        - backup
-        - media
-        - nas
+      loop: "{{ zfs_zvols }}"
 
       # For now, samba user password is configured manually
-      # smbpasswd -a samba_user
+      # smbpasswd -a smb_user
