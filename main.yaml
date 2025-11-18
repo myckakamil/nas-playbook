@@ -17,16 +17,21 @@
     - name: Load vars
       ansible.builtin.include_vars: config.yaml
 
-    - name: Add contrib component to main suite
-      ansible.builtin.replace:
-        path: /etc/apt/sources.list.d/debian.sources
-        regexp: '^(Components: main)$'
-        replace: 'Components: main contrib'
+    - name: Add contrib repository
+      ansible.builtin.deb822_repository:
+        name: debian
+        types: deb
+        uris: http://deb.debian.org/debian
+        suites: trixie
+        components:
+          - main
+          - contrib
       notify: Update apt repos
 
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
+        cache_valid_time: 3600
 
     - name: Install samba
       ansible.builtin.apt:
