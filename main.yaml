@@ -17,6 +17,9 @@
     - name: Load vars
       ansible.builtin.include_vars: config.yaml
 
+    - name: Load vault
+      ansible.builtin.include_vars: vault.yaml
+
     - name: Add contrib repository
       ansible.builtin.deb822_repository:
         name: debian
@@ -91,5 +94,18 @@
         mode: "0755"
       loop: "{{ zfs_zvols }}"
 
-      # For now, samba user password is configured manually
-      # smbpasswd -a smb_user
+    # https://gist.github.com/cmsj/5557c45ca5fa4779e81394105be204e1
+    # This task will run only if user doesn't exists.
+    # Changing password won't work.
+    - name: Fetch current smbpasswd users
+      ansible.builtin.command: /usr/bin/pdbedit -L
+      register: pdb_users
+      changed_when: false
+
+    - name: Set Samba password for smbuser
+      ansible.builtin.command:
+        cmd: /usr/bin/smbpasswd -s -a {{ ansible_user }}
+        stdin: |
+          {{ smbuser_password }}
+      when: pdb_users.stdout.find(ansible_user) == -1
+      changed_when: false  # Only to satisfy ansible lint
