@@ -64,6 +64,8 @@
       community.general.zfs:
         name: "{{ item.name }}"
         state: present
+        extra_zfs_properties:
+          compression: lz4
       loop: "{{ zfs_zvols }}"
 
     - name: Configure samba
