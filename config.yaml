@@ -11,10 +11,13 @@ zfs_zvols:
   - name: tank/backup
     share_name: backup
     comment: Backups from VM
+    quota: 2T
   - name: tank/media
     share_name: media
     comment: Movies and TV series
+    quota: 3TB
   - name: tank/nas
     share_name: nas
     comment: Backups from workstations
+    quota: 1TB
 smb_user: "{{ ansible_user }}"

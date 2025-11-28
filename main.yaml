@@ -74,6 +74,7 @@
         state: present
         extra_zfs_properties:
           compression: lz4
+          quota: "{{ item.quota }}"
       loop: "{{ zfs_zvols }}"
 
     - name: Enable weekly zfs scrub
