@@ -76,6 +76,20 @@
           compression: lz4
       loop: "{{ zfs_zvols }}"
 
+    - name: Enable weekly zfs scrub
+      ansible.builtin.service:
+        name: zfs-scrub-weekly@{{ item.name }}.timer
+        enabled: true
+        state: started
+      loop: "{{ zfs_pools }}"
+
+    - name: Enable weekly zfs trim
+      ansible.builtin.service:
+        name: zfs-trim-weekly@{{ item.name }}.timer
+        enabled: true
+        state: started
+      loop: "{{ zfs_pools }}"
+
     - name: Configure samba
       ansible.builtin.template:
         src: templates/smb.conf.j2
